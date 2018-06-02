@@ -92,3 +92,11 @@ vim snippets/urls.py
 vim tutorial/settings.py
 ```
 
+# 6
+
+```
+vim snippets/views.py
+vim snippets/urls.py
+```
+
+

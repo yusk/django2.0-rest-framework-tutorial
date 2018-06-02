@@ -154,3 +154,161 @@ class SnippetDetail(mixins.RetrieveModelMixin,
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
 ```
+
+```python
+class SnippetSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+
+    class Meta:
+        model = Snippet
+        fields = ('id', 'owner', 'title', 'code', 'linenos', 'language', 'style')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'snippets')
+```
+
+# 5
+
+```python
+from rest_framework import generics, permissions, renderers
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
+
+from django.contrib.auth.models import User
+from snippets.models import Snippet
+from snippets.serializers import SnippetSerializer, UserSerializer
+from snippets.permissions import IsOwnerOrReadOnly
+
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'users': reverse('user-list', request=request, format=format),
+        'snippets': reverse('snippet-list', request=request, format=format)
+    })
+
+
+class SnippetList(generics.ListCreateAPIView):
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly,
+    )
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
+class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly,
+    )
+
+
+class SnippetHighlight(generics.GenericAPIView):
+    queryset = Snippet.objects.all()
+    renderer_classes = (renderers.StaticHTMLRenderer,)
+
+    def get(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
+
+
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class UserDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+```
+
+```python
+from django.urls import path
+from rest_framework.urlpatterns import format_suffix_patterns
+from snippets import views
+
+
+urlpatterns = [
+    path('', views.api_root),
+    path('snippets/',
+         views.SnippetList.as_view(),
+         name='snippet-list'),
+    path('snippets/<int:pk>/',
+         views.SnippetDetail.as_view(),
+         name='snippet-detail'),
+    path('snippets/<int:pk>/highlight/',
+         views.SnippetHighlight.as_view(),
+         name='snippet-highlight'),
+    path('users/',
+         views.UserList.as_view(),
+         name='user-list'),
+    path('users/<int:pk>/',
+         views.UserDetail.as_view(),
+         name='user-detail'),
+]
+
+urlpatterns = format_suffix_patterns(urlpatterns)
+```
+
+# 6
+
+```python
+from django.urls import path
+from rest_framework import renderers
+from rest_framework.urlpatterns import format_suffix_patterns
+from snippets.views import SnippetViewSet, UserViewSet, api_root
+
+snippet_list = SnippetViewSet.as_view({
+    'get': 'list',
+    'post': 'create'
+})
+snippet_detail = SnippetViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy'
+})
+snippet_highlight = SnippetViewSet.as_view({
+    'get': 'highlight'
+}, renderer_classes=[renderers.StaticHTMLRenderer])
+user_list = UserViewSet.as_view({
+    'get': 'list'
+})
+user_detail = UserViewSet.as_view({
+    'get': 'retrieve'
+})
+
+
+urlpatterns = [
+    path('', api_root),
+    path('snippets/',
+         snippet_list,
+         name='snippet-list'),
+    path('snippets/<int:pk>/',
+         snippet_detail,
+         name='snippet-detail'),
+    path('snippets/<int:pk>/highlight/',
+         snippet_highlight,
+         name='snippet-highlight'),
+    path('users/',
+         user_list,
+         name='user-list'),
+    path('users/<int:pk>/',
+         user_detail,
+         name='user-detail'),
+]
+
+urlpatterns = format_suffix_patterns(urlpatterns)
+```
