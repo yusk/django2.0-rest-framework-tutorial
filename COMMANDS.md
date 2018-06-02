@@ -38,5 +38,18 @@ vim snippets/urls.py
 vim tutorial/urls.py
 http http://127.0.0.1:8000/snippets/
 http http://127.0.0.1:8000/snippets/21/
+```
 
+# 2
+
+```
+vim snippets/views.py
+vim snippets/urls.py
+http http://127.0.0.1:8000/snippets/
+http http://127.0.0.1:8000/snippets/ Accept:application/json
+http http://127.0.0.1:8000/snippets/ Accept:text/html
+http http://127.0.0.1:8000/snippets.json
+http http://127.0.0.1:8000/snippets.api
+http --form POST http://127.0.0.1:8000/snippets/ code="print 123"
+http --json POST http://127.0.0.1:8000/snippets/ code="print 456"
 ```
