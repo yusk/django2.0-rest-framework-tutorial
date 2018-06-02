@@ -99,4 +99,16 @@ vim snippets/views.py
 vim snippets/urls.py
 ```
 
+# 7
 
+```
+pip install coreapi
+http http://127.0.0.1:8000/schema/ Accept:application/coreapi+json
+pip install coreapi-cli
+coreapi get http://127.0.0.1:8000/schema/
+coreapi action snippets list
+coreapi action snippets highlight --param id=1
+coreapi credentials add 127.0.0.1 admin:password123 --auth basic
+coreapi action snippets create --param title="Example" --param code="print('hello, world')"
+coreapi action snippets delete --param id=3
+```
