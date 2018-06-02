@@ -70,7 +70,7 @@ rm -f db.sqlite3
 rm -r snippets/migrations
 python manage.py makemigrations snippets
 python manage.py migrate
-python manage.py createsuperuser
+python manage.py createsuperuser --email admin@example.com --username admin  # password123
 vim snippets/serializers.py
 vim snippets/views.py
 vim snippets/urls.py
@@ -81,3 +81,14 @@ vim snippets/views.py
 http POST http://127.0.0.1:8000/snippets/ code="print 123"
 http -a admin:password123 POST http://127.0.0.1:8000/snippets/ code="print 789"
 ```
+
+# 5
+
+```
+vim snippets/views.py
+vim snippets/urls.py
+vim snippets/serializers.py
+vim snippets/urls.py
+vim tutorial/settings.py
+```
+
